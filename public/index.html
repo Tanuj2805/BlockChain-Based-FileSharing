@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pinata File Uploader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 360px;
+    }
+    input[type=file] {
+      margin: 10px 0;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    #result {
+      margin-top: 15px;
+      font-size: 14px;
+      word-break: break-all;
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📁 Upload File to Pinata</h2>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function uploadFile() {
+      const fileInput = document.getElementById('fileInput');
+      const resultDiv = document.getElementById('result');
+      const file = fileInput.files[0];
+      if (!file) {
+        resultDiv.textContent = 'Please select a file first.';
+        return;
+      }
+      resultDiv.textContent = '⏳ Uploading...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/upload-file', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.cid) {
+          resultDiv.innerHTML = `
+            ✅ Uploaded Successfully!<br>
+            <strong>CID:</strong> ${data.cid}<br>
+            <a href="https://gateway.pinata.cloud/ipfs/${data.cid}" target="_blank">
+              View File on IPFS
+            </a>
+          `;
+        } else {
+          resultDiv.textContent = '❌ Upload failed.';
+        }
+      } catch (err) {
+        resultDiv.textContent = '❌ Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

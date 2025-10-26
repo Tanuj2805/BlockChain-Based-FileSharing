@@ -1,0 +1,77 @@
+#include <ESP8266WiFi.h>
+
+const char* ssid = "5050";   // Replace with your WiFi SSID
+const char* password = "1234554321"; // Replace with your WiFi password
+
+WiFiServer server(80); // Create a server on port 80
+WiFiClient client;
+
+#define LED1 4
+#define LED2 5
+
+void setup() {
+    Serial.begin(9600);
+    WiFi.begin(ssid, password);
+    Serial.print("Connecting to WiFi");
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.print(".");
+    }
+
+    Serial.println("\nWiFi connected!");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+
+    pinMode(LED1, OUTPUT);
+    pinMode(LED2, OUTPUT);
+    digitalWrite(LED1, LOW);
+    digitalWrite(LED2, LOW);
+
+    server.begin();  // Start the server
+}
+
+void loop() {
+    client = server.available(); // Check for incoming clients
+
+    if (client) {
+        Serial.println("New Client Connected");
+        String request = client.readStringUntil('\n'); // Read request
+        request.trim(); // Remove extra spaces
+        Serial.println(request); // Debugging
+
+        if (request == "GET /LED_1OFF HTTP/1.1") {
+            digitalWrite(LED1, LOW);
+        } 
+        else if (request == "GET /LED_1ON HTTP/1.1") {
+            digitalWrite(LED1, HIGH);
+        }
+        else if (request == "GET /LED_2OFF HTTP/1.1") {
+            digitalWrite(LED2, LOW);
+        }
+        else if (request == "GET /LED_2ON HTTP/1.1") {
+            digitalWrite(LED2, HIGH);
+        }
+
+        // Send HTML response with <a href> inside <button>
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-type:text/html");
+        client.println("Connection: close");
+        client.println();
+        client.println("<html><head><title>ESP8266 LED Control</title></head><body>");
+        client.println("<h1>ESP8266 LED Control</h1>");
+
+        // LED1 Buttons
+        client.println("<p><a href='/LED_1ON'><button>Turn LED1 ON</button></a></p>");
+        client.println("<p><a href='/LED_1OFF'><button>Turn LED1 OFF</button></a></p>");
+
+        // LED2 Buttons
+        client.println("<p><a href='/LED_2ON'><button>Turn LED2 ON</button></a></p>");
+        client.println("<p><a href='/LED_2OFF'><button>Turn LED2 OFF</button></a></p>");
+
+        client.println("</body></html>");
+        client.println();
+         
+        Serial.println("Client Disconnected");
+    }
+}
